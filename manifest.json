@@ -1,0 +1,73 @@
+{
+  "name": "ARBot",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "Amazon Relay Notifier",
+  "homepage_url": "https://fb.com/kosiakMD",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "ARBot",
+    "default_popup": "popup.html"
+  },
+  "default_locale": "en",
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab",
+    "tabs",
+    "<all_urls>",
+    "devtools_page",
+    "webRequest",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "notifications",
+    "*://relay.amazon.de/*",
+    "*://relay.amazon.de/api/*",
+    "https://api.telegram.org/*"
+  ],
+  "host_permissions": [
+    "*://relay.amazon.de/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'",
+    "sandbox": "sandbox chrome-extension: allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self';"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://relay.amazon.de/loadboard/search"
+      ],
+      "run_at": "document_start",
+      "type": "module",
+      "js": [
+        "js/jquery.js",
+        "js/common.js",
+        "js/test.js",
+        "js/inject.js",
+        "js/content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+        "matches": [
+            "https://relay.amazon.de/*"
+        ],
+        "resources": [
+          "js/jquery.js",
+          "js/common.js",
+          "js/test.js",
+          "js/injected.js",
+          "js/content.js"
+        ]
+    }
+  ]
+}
+
