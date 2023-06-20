@@ -2,9 +2,9 @@
 // import { bot } from './bot.js';
 
 // importScripts('./common.js', './bot.js', './inject.js');
-importScripts('./common.js', './bot.js');
+importScripts('./common.js', './bot.js', './messages.js');
 
-this.console.log = console.log.bind(this, '____BG');
+this.console.log = console.log.bind(this, '____BG\n\t');
 
 if ('serviceWorker' in navigator) {
   console.log('serviceWorker in navigator');
@@ -184,12 +184,6 @@ const limitPerSecond = 2;
 //   });
 // });
 
-chrome.runtime.onSuspend.addListener(function () {
-  console.log('Unloading.');
-  chrome.browserAction.setBadgeText({ text: '!!!!!!!' });
-  chrome.action.setBadgeText({ text: '!!!!!!!' });
-});
-
 // chrome.runtime.onMessage.addListener(async function (request, sender, sendResponse) {
 //   console.log('___onMessage parse', request, sender);
 // // MediaQueryList.addListener(function (request, sender, sendResponse) {
@@ -220,53 +214,11 @@ chrome.runtime.onSuspend.addListener(function () {
 //   }
 // });
 
-// https://api.telegram.org/bot$%7BtelegramBotToken%7D/sendMessage?chat_id=${chatId}&text=Check%20out%20this%20location!&parse_mode=HTML&disable_web_page_preview=true&latitude=${latitude}&longitude=${longitude}
-// https://api.telegram.org/bot$%7BtelegramBotToken%7D/sendMessage?chat_id=${chatId}&text=Check%20out%20this%20location!&parse_mode=HTML&disable_web_page_preview=true&latitude=42.430903&longitude=14.194901
-// latitude longitude
-// latitude // 42.430903
-// longitude // 14.194901
-// https://www.google.pl/maps/@<lat>,<lon>,<zoom>z
-// https://www.google.com/maps/place/42.430903,14.194901/@<42.430903>,<14.194901>,10z
-const createMapUrl = (work) => {
-  const { latitude: lat, longitude: lon } = work.endLocation;
-  // return `[Google Map](https://www.google.com/maps/place/${lat},${lon}/@<${lat}>,<${lon}>,10z)`;
-  // return `<a href="https://www.google.com/maps/place/${lat},${lon}/@<${lat}>,<${lon}>,10z">Google Map</a>`;
-  // return `<a target="_self" href="https://www.google.com/maps/place/${lat},${lon}">Google Map</a>`;
-  // return `[Google Map](https://www.google.com/maps/place/${lat},${lon})`;
-  return `[Location](https://www.google.com/maps/search/?api=1&query=${lat},${lon})`;
-  // return `[Google Map](https://www.google.com/maps/@${lat},${lon},13z)`;
-};
-
-const getPoint = (location) => {
-  const city = location.city.replace(`${location.postalCode}, `, '');
-  return `*${location.stopCode}* ${city}, ${location.country}`;
-};
-const getDate = (dateTime) => {
-  return new Date(dateTime).toLocaleString().slice(0, -3);
-};
-const normNumber = (float) => {
-  return float.toFixed(2).replace(/\./g, ',');
-};
-// 🏁
-// 🔚
-// firstPickupTime
-// endLocation .label + .city .state .country
-// startLocation
-// lastDeliveryTime
-// payout .unit .value
-// totalDistance .unit .value
-const createMessage = (work, testMode) => {
-  let msg = testMode ? '\\[TEST\]\n' : '';
-  msg += `🏁 ${getPoint(work.startLocation)}\n`;
-  msg += `⬅️ ${getDate(work.firstPickupTime)}\n`;
-  msg += `📍 ${getPoint(work.endLocation)}\n`;
-  msg += `➡️ ${getDate(work.lastDeliveryTime)}\n`;
-  msg += `💰 *${normNumber(work.payout.value)}* ${work.payout.unit}`;
-  msg += ` - ${normNumber(work.payout.value / work.totalDistance.value)} ${work.payout.unit}/${work.totalDistance.unit}\n`;
-  msg += `🚚 ${normNumber(work.totalDistance.value)} ${work.totalDistance.unit}\n`;
-  msg += createMapUrl(work);
-  return msg;
-};
+chrome.runtime.onSuspend.addListener(function () {
+  console.log('Unloading.');
+  chrome.browserAction.setBadgeText({ text: '!!!!!!!' });
+  chrome.action.setBadgeText({ text: '!!!!!!!' });
+});
 
 // Inject a script directly into the page DOM
 // chrome.tabs.executeScript({
@@ -274,14 +226,18 @@ const createMessage = (work, testMode) => {
 // });
 // chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  // console.group('Message Listener')
   switch (request.type) {
     case MessageTypeEnum.newWorks: {
       (async () => {
-        console.log('message type', request.type, request);
+        const gid = 'newWorks - ' + Math.random().toString(36).substr(2, 9);
+        logger.openGroup(gid);
+        logger.log(gid, 'message type', request.type, request);
         const location = request.location;
         const newWorks = request.newWorks;
         const count = newWorks.length;
-        let msg = `New *${count}* works at: *${location}*`;
+        const time = new Date().toLocaleTimeString();
+        let msg = `${time} | New *${count}* works at: *${location}*`;
         const testStatus = await getTestStatus();
         if (testStatus) {
           msg = `\\[TEST\] ${msg}`;
@@ -290,14 +246,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // bot = new Bot(request.payload);
         // bot.start();
         const notifyLocal = async () => {
+          console.group('notifyLocal');
           try {
             const id = chrome.runtime.id;
-            const creationCallback = () => {
-              console.log('creationCallback', id);
-              // chrome.notifications.clear(id, () => {
-              //   console.log('Notification cleared');
-              // });
-            };
             const options = {
               type: 'basic',
               title: testStatus ? `[TEST] New Works: ${count}` : `New Works: ${count}`,
@@ -306,60 +257,89 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
               // imageUrl: 'icons/icon128.png',
             };
             // const id = request.center = 0;
-            const notify = chrome.notifications.create(id, options, creationCallback);
+            const notify = await new Promise((resolve, reject) => {
+              try {
+                chrome.notifications.create(id, options, (notId) => {
+                  console.log('creationCallback, notId', notId, 'extension', id);
+                  resolve(notId);
+                });
+              } catch (e) {
+                reject(e);
+              }
+            });
             console.log('notify', notify);
           } catch (e) {
             return console.error(e);
+          } finally {
+            console.groupEnd();
           }
         };
-        const notifyBot = async () => {
-          // try {
-            return bot.log({ text: msg }, testStatus);
-          // } catch (e) {
-          //   return console.error(e);
-          // }
+        const notifySummary = async () => {
+          logger.log(gid, 'notifySummary');
+          return bot.log({ text: msg });
         };
-        const notifyAll = newWorks.map((work) => {
-          const msg = createMessage(work, testStatus);
-          console.log('notify each', msg);
+        const notifyAll = newWorks.map(async (work) => {
+          logger.log(gid, 'notifyAll');
+          const msg = await createWorkMsg(work, 'new');
+          // logger.log(gid, 'notify each', msg);
           const { latitude, longitude } = work.endLocation;
-          return async () => bot.log({
+          const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+          return bot.log({
             text: msg,
             // latitude,
             // longitude,
             reply_markup: {
-              inline_keyboard: [[{
-                text: 'Navigate',
-                callback_data: `navigate:${latitude},${longitude}`,
-              }]],
+            // need set Navigate button in Telegram message form my bot and open map in new window by click
+              inline_keyboard: [[
+                {
+                  text: 'Navigate1',
+                  // callback_data: `navigate:${latitude},${longitude}`,
+                  url: mapUrl,
+                }, {
+                  text: 'Navigate2',
+                  // callback_data: `navigate:${latitude},${longitude}`,
+                  url: `navigate:${latitude},${longitude}`,
+                }, {
+                  text: 'Open Map1',
+                  callback_data: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                }, {
+                  text: 'Open Map2',
+                  url: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                }
+              ]],
             },
-          }, testStatus);
+          });
         });
         const logResults = (results, error = false) => {
-          const log = error ? console.error : console.log;
-          results.length && results.forEach(r => log(r));
-        }
+          logger.log(gid, 'logResults');
+          const log = error ? logger.error : logger.log;
+          results.length && results.forEach(x => log(gid, x));
+        };
 
         try {
-          await Promise.all([
-            notifyLocal(),
-            queuePerSecond([notifyBot, ...notifyAll], limitPerSecond,  true)
+          const r = await Promise.all([
+            // notifyLocal(),
+            // [notifySummary, ...notifyAll].map(f => handleAsync(f)),
+            queuePerSecond([notifySummary, ...notifyAll], 10, true)
               .then((results) => {
-                console.log('queuePerSecond done', results);
+                const subGid = 'queuePerSecond done - ' + Math.random().toString(36).substr(2, 9);
+                logger.openGroup(subGid, gid);
+                logger.log(subGid, 'queuePerSecond done', results);
                 const { successes, errors } = results;
-                // logResults(success);
+                logResults(success);
                 logResults(errors, true);
+                logger.closeGroup(subGid);
               }).catch((e) => {
                 console.error('queuePerSecond', e);
                 throw e;
-            }),
-          ]).then((r) => {
-            console.log('notifyAll done', r);
-          }).catch((e) => {
-            console.error(e);
-          });
+              }),
+          ]);
+          logger.log(gid, 'notifyAll done', r);
         } catch (e) {
-          return console.error(e);
+          return logger.error(gid, e);
+        } finally {
+          logger.closeGroup(gid);
         }
       })();
       break;
@@ -368,8 +348,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       (async () => {
         console.log('message type', request.type, request);
         const url = chrome.runtime.getURL(request.payload);
-        const [testStatus, workStatus] = await Promise.all([getTestStatus(), getWorkStatus()]);
-        const response = { url, workStatus, testStatus };
+        const [testStatus, workStatus, newUIStatus] =
+          await Promise.all(
+            [getTestStatus(), getWorkStatus(), getNewUIStatus()]
+          );
+        const response = { url, workStatus, testStatus, newUIStatus };
         console.log('response', MessageTypeEnum.getInjectData, response);
         return response;
       })().then(sendResponse);

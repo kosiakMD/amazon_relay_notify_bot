@@ -1,10 +1,24 @@
 console.log('bot.js');
 
+const BartaChat = '-697279153';
+const MyTestChat = '-900942200';
+
 const bot_id = '6094248667:AAGEhf8xut4pzdKIMgMAamz4SzsJ9ZdQ910';
 const telegram_bot = `bot${bot_id}`;
-const chat_id = '-697279153';
-const test_chat_id = '-900942200';
+const chat_id = BartaChat; // Barta
+// const chat_id = '-1001975833181'; // Others
+// const chat_3_id = '-956188278'; // Others
+const test_chat_id = MyTestChat; // TEST
+// const test_chat_id = '-1001975833181';
+// const test_chat_id = '1232761014';
 
+/**
+ * @define {
+ *
+ * } Response
+ */
+
+/** @type {() => Promise<any>} */
 const postData = async (url = '', data, options) => {
   // Default options are marked with *
   try {
@@ -39,33 +53,47 @@ const postData = async (url = '', data, options) => {
   }
 };
 
-function sendMsg(data = '_', chatId, testMode = false, geo) {
+/**
+ * @typedef {{
+ *   text: string;
+ *   reply_markup?: {
+ *     inline_keyboard: {
+ *       text: string;
+ *       callback_data: string;
+ *     }[][];
+ *   }
+ * }} Message
+ * */
+
+/**
+ * @typedef {(data: Message, geo?: any) => Promise<Response>} SendMsg
+ */
+async function sendMsg(data, geo) {
+  const id = 'sendMsg - ' + Math.random().toString(36).substr(2, 9);
+  logger.openGroup(id);
+  logger.log(id, 'sendMsg');
   const url = 'https://api.telegram.org/' + telegram_bot + '/sendMessage';
+  logger.log(id, 'url', url);
   const botData = {
     ...data,
-    chat_id: testMode ? test_chat_id : chatId,
+    chat_id: await getTestStatus() ? test_chat_id : chat_id,
     disable_web_page_preview: true,
     parse_mode: 'Markdown',
-    disable_notification: testMode,
+    disable_notification: await getTestStatus(),
     // 'user_id: '',
     // disable_web_page_preview: false,
     // "parse_mode" : "MarkdownV2"
     // "parse_mode" : "HTML",
     // latitude: data.latitude,
     // longitude: data.longitude,
-
   };
-  console.log(botData);
+  logger.log(id, 'botData', botData);
+  logger.closeGroup(id);
   // return
   return postData(url, botData);
 }
 
-
-function log(data = '_', testMode, geo) {
-  return sendMsg(data, chat_id, testMode, geo);
-}
-
 const bot = {
-  sendMsg,
-  log,
+  // sendMsg,
+  log: sendMsg,
 };

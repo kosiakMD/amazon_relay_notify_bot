@@ -22,15 +22,10 @@
     "storage",
     "activeTab",
     "tabs",
-    "<all_urls>",
-    "devtools_page",
     "webRequest",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
-    "notifications",
-    "*://relay.amazon.de/*",
-    "*://relay.amazon.de/api/*",
-    "https://api.telegram.org/*"
+    "notifications"
   ],
   "host_permissions": [
     "*://relay.amazon.de/*"

@@ -18,6 +18,8 @@ chrome.runtime.sendMessage({
   s.dataset.ex = chrome.runtime.id;
   s.dataset.workStatus = response.workStatus;
   s.dataset.testStatus = response.testStatus;
+  s.dataset.newUIStatus = response.newUIStatus;
+  s.dataset.darkThemeStatus = response.darkThemeStatus;
 });
 
 s.onload = function () {

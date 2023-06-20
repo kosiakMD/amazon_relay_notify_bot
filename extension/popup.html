@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title></title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.cdnfonts.com/css/amazon-ember" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+</head>
+<body>
+    <form id="form">
+        <section id="header">
+            <h1><img src="icons/light_logo.png" alt="logo" id="logo"/>-relay bot</h1>
+        </section>
+
+        <div id="testBlock">
+            <label id="testControlBtn" for="extend">*</label>
+            <input class="helper-toggle-subject" type="checkbox" id="extend" name="AddReview"/>
+            <div class="pad-v helper-toggle-object" id="testActions">
+                <label for="testStatus" class="pad-v row jc-sb">Test mode
+                    <input id="testStatus" type="checkbox"/>
+                </label>
+                <label for="darkThemeStatus" class="pad-v row jc-sb">Dark theme
+                    <input id="darkThemeStatus" type="checkbox"/>
+                </label>
+            </div>
+        </div>
+
+        <label
+            class="pad-v row jc-sb ai-c tooltip"
+            for="workStatus"
+            data-tooltip="Click to play"
+            data-tooltip-checked="Click to stop"
+        >
+            On/Off
+            <input type="checkbox" id="workStatus"/>
+            <span id="playBtn"></span>
+        </label>
+        <label for="newUIStatus" class="pad-v row jc-sb ai-c tooltip" data-tooltip="Check if use new UI">New UI
+            <input id="newUIStatus" type="checkbox"/>
+        </label>
+        <label for="interval" class="pad-v row jc-sb ai-c tooltip" data-tooltip="Refresh after seconds">Interval (sec)
+            <input id="interval" type="number" pattern="[0-9]{3}" class="interval" value="10" step="0.5" min="0.5"/>
+        </label>
+
+        <div class="pad-v row jc-sb">
+            <button type="submit" id="saveBtn">Save</button>
+        </div>
+    </form>
+
+    <script src="js/common.js"></script>
+    <script src="js/popup.js"></script>
+    <!--    <script type="module" src="js/bot.js"></script>-->
+</body>
+</html>

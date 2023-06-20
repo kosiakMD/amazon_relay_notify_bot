@@ -95,11 +95,12 @@ const workUrl = 'https://relay.amazon.de/api/loadboard/search';
 const TEST = true;
 
 (function (_f = fetch) {
-  this.console.log = console.log.bind(this, '____Injected');
+  this.console.log = console.log.bind(this, '____Injected\n\t');
   const selfScript = document.getElementById('injected');
   const extensionId = selfScript.dataset.ex;
   const workStatus = selfScript.dataset.workStatus;
   const testStatus = selfScript.dataset.testStatus;
+  const newUIStatus = selfScript.dataset.newUIStatus;
   // self[extensionId] = {
   //   test: false,
   // };
@@ -107,6 +108,8 @@ const TEST = true;
   const config = {
     workStatus: workStatus,
     testStatus: testStatus,
+    newUIStatus: newUIStatus,
+    extensionId: extensionId,
   };
   console.log('config', config);
 
@@ -114,6 +117,7 @@ const TEST = true;
     // console.log('\n\tevent', event);
     // filter out messages not sent from this extension
     if (event.source === window && event.data.ex === extensionId) {
+      console.group('Event Listener at injected.js', extensionId)
       if (event.data.type === 'workStatus') {
         console.log('injected event workStatus', event.data);
         config.workStatus = event.data.payload;
@@ -122,7 +126,12 @@ const TEST = true;
         console.log('injected event testStatus', event.data);
         config.testStatus = event.data.payload;
       }
+      if (event.data.type === 'newUIStatus') {
+        console.log('injected event newUIStatus', event.data);
+        config.newUIStatus = event.data.payload;
+      }
     }
+    console.groupEnd();
   }, false);
 
   const handler = async (response) => {

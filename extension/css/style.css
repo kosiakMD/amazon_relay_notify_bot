@@ -1,0 +1,266 @@
+:root {
+    /*--mainColor: #292a2d;*/
+    --mainColor: #002e36;
+    --playBtnSize: 16px;
+    /*--playColor: #202020;*/
+    /*--selectColor: #404040;*/
+    /*--selectColor: #ff6201;*/
+    /*--selectColor: #05a8e1;*/
+    --secondaryColor: #05a8e1;
+    /*--highlightColor: #ff9e01;*/
+    --highlightColor: #b8e8f7;
+    /*--darkLightColor: #b26c00;*/
+    --darkLightColor: #055d7b;
+    --superLightColor: #fff;
+}
+
+.dark-theme {
+    --mainColor: #292a2d;
+    --secondaryColor: #ff6201;
+    --highlightColor: #ff9e01;
+    --darkLightColor: #b26c00;
+    --superLightColor: #fff;
+}
+
+* {
+    display: flex;
+    flex-direction: column;
+    /*font-family: 'Amazon Ember', sans-serif;*/
+    /*font-family: 'Amazon Ember Cd RC', sans-serif;*/
+    /*font-family: 'Amazon Ember Display', sans-serif;*/
+    /*font-family: 'Amazon Ember Duospace', sans-serif;*/
+    /*font-family: 'Amazon Ember Mono', sans-serif;*/
+    font-family: 'Amazon Ember V2', sans-serif;
+    /*align-items: center;*/
+    /*justify-content: center;*/
+}
+
+body {
+    width: 150px;
+    font-size: 14px;
+    background: var(--mainColor);
+    color: var(--superLightColor);
+}
+
+label, label:hover {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input {
+    background: var(--mainColor);
+    border-color: var(--secondaryColor);
+    color: var(--superLightColor);
+    border-radius: 5px;
+    text-align: center;
+}
+
+button {
+    background: var(--highlightColor);
+    border-color: var(--secondaryColor);
+    color: var(--mainColor);
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    background-color: var(--superLightColor);
+    border-color: var(--secondaryColor);
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid currentColor;
+    border-radius: 0.15em;
+    transform: translateY(-0.075em);
+    /* ...existing styles */
+    /*display: grid;*/
+    /*place-content: center;*/
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+input[type="checkbox"]::before {
+    content: "";
+    cursor: pointer;
+    width: 0.65em;
+    height: 0.65em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--secondaryColor);
+}
+
+input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+.row {
+    flex-direction: row;
+}
+
+.jc-sb {
+    justify-content: space-between;
+}
+
+.jc-c {
+    justify-content: center;
+}
+
+.ai-c {
+    align-items: center;
+}
+
+.marg {
+    margin: 5px;
+}
+
+.marg-v {
+    margin: 5px 0;
+}
+.pad-v {
+    padding: 5px 0;
+}
+
+.interval {
+    width: 40px;
+    height: 20px;
+}
+
+#logo {
+    display: inline;
+    height: 21px;
+    margin-bottom: -7px;
+    margin-right: -5px;
+}
+
+#saveBtn {
+    margin: auto;
+}
+
+input[type="checkbox"].helper-toggle-subject {
+    display: none;
+}
+
+input[type="checkbox"].helper-toggle-subject + .helper-toggle-object {
+    display: none;
+}
+
+input[type="checkbox"]:checked.helper-toggle-subject + .helper-toggle-object {
+    display: block;
+}
+
+#testBlock {
+    position: relative;
+    display: block;
+    min-height: 15px;
+}
+#testControlBtn {
+    text-align: right;
+    position: absolute;
+    right: 0;
+}
+#testActions {
+    padding: 20px 0 10px 0;
+}
+
+/*.helper-trigger[type="checkbox"]:checked .helper-hide {*/
+/*    display: none;*/
+/*}*/
+
+section#header {
+    display: block;
+}
+
+section#header h1 {
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    margin: 0;
+    font-size: 22px;
+}
+
+.helper-hide {
+    display: inline-block;
+    float: right;
+    width: 20px;
+    text-align: right;
+}
+
+h1 {
+    float: left;
+}
+
+#workStatus {
+    display: none; /* Hide the checkbox */
+}
+
+/* Stop button: square */
+#playBtn::before {
+    content: "";
+
+    width: 0;
+    height: 0;
+    border-top: calc(var(--playBtnSize) / 2) solid transparent;
+    border-bottom: calc(var(--playBtnSize) / 2) solid transparent;
+    border-left: var(--playBtnSize) solid var(--highlightColor);
+    background-color: transparent; /* Remove the background */
+}
+
+/* Play button: triangle */
+#workStatus:checked ~ #playBtn::before {
+    content: "";
+
+    width: var(--playBtnSize);
+    height: var(--playBtnSize);
+    background-color: var(--highlightColor);
+    border: 0;
+}
+
+#playBtn:hover::before {
+    border-color: transparent transparent transparent var(--secondaryColor);
+    scale: 1.1;
+}
+
+#workStatus:checked ~ #playBtn:hover::before {
+    background-color: var(--secondaryColor);
+    scale: 1.1;
+}
+
+.tooltip {
+    position: relative;
+}
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 75%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background-color: var(--darkLightColor);
+    color: var(--superLightColor);
+    border: 1px solid var(--mainColor);
+    border-radius: 5px;
+    padding: 5px;
+    height: 10px;
+    width: max-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+.tooltip:hover::before {
+    opacity: 1;
+    transform: translate(-50%, -25%);
+}
+#workStatus:checked ~ .tooltip::before {
+    content: attr(data-tooltip-checked);
+}
