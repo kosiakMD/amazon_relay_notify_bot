@@ -52,7 +52,7 @@ const getPoint = (location) => {
 };
 /** @type (string) => string */
 const getDate = (dateTime) => {
-  return `${new Date(dateTime).toUTCString()} (${new Date(dateTime).toLocaleString().slice(0, -3)})`;
+  return new Date(dateTime).toLocaleString().slice(0, -3);
 };
 /** @type (number) => string */
 const normNumber = (float) => {
