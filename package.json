@@ -2,12 +2,14 @@
   "name": "node-server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "deploy-server": "git subtree push --prefix server heroku master"
   },
   "dependencies": {
     "dotenv": "16.0.3",
+    "node-fetch": "^3.3.1",
     "node-telegram-bot-api": "0.53.0"
   }
 }
