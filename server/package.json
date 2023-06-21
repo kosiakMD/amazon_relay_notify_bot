@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "deploy-server": "git subtree push --prefix server heroku master"
+    "deploy-server": "cd .. && bash deploy.sh"
   },
   "dependencies": {
     "dotenv": "16.0.3",
