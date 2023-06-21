@@ -52,7 +52,7 @@ const getPoint = (location) => {
 };
 /** @type (string) => string */
 const getDate = (dateTime) => {
-  return new Date(dateTime).toLocaleString().slice(0, -3);
+  return `${new Date(dateTime).toUTCString()} (${new Date(dateTime).toLocaleString().slice(0, -3)})`;
 };
 /** @type (number) => string */
 const normNumber = (float) => {
@@ -65,9 +65,9 @@ const createWorkMsg = async (work, type = 'new') => {
   if (type === 'price') {
     msg += '🔺💰 *Price increase*\n';
   }
-  msg += `🏁 ${getPoint(work.startLocation)}\n`;
+  msg += `📍 ${getPoint(work.startLocation)}\n`;
   msg += `⬅️ ${getDate(work.firstPickupTime)}\n`;
-  msg += `📍 ${getPoint(work.endLocation)}\n`;
+  msg += `🏁 ${getPoint(work.endLocation)}\n`;
   msg += `➡️ ${getDate(work.lastDeliveryTime)}\n`;
   msg += `💰 *${normNumber(work.payout.value)}* ${work.payout.unit}`;
   msg += ` - ${normNumber(work.payout.value / work.totalDistance.value)} ${work.payout.unit}/${work.totalDistance.unit}\n`;

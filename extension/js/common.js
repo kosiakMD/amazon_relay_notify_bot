@@ -352,3 +352,10 @@ async function queuePerSecond(arr, limit, log = false) {
   logger.closeGroup(id);
   return { successes, errors };
 }
+
+function serialize(array) {
+  return array.join(';');
+}
+function deserialize(string) {
+  return string.split(';');
+}

@@ -234,6 +234,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         logger.openGroup(gid);
         logger.log(gid, 'message type', request.type, request);
         const location = request.location;
+        /** @type { Work[] } */
         const newWorks = request.newWorks;
         const count = newWorks.length;
         const time = new Date().toLocaleTimeString();
@@ -283,30 +284,50 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
           const msg = await createWorkMsg(work, 'new');
           // logger.log(gid, 'notify each', msg);
           const { latitude, longitude } = work.endLocation;
-          const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          // const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
 
           return bot.log({
             text: msg,
             // latitude,
             // longitude,
             reply_markup: {
-            // need set Navigate button in Telegram message form my bot and open map in new window by click
+              // need set Navigate button in Telegram message form my bot and open map in new window by click
               inline_keyboard: [[
+                // {
+                //   text: 'Navigate1',
+                //   // callback_data: `navigate:${latitude},${longitude}`,
+                //   url: mapUrl,
+                // },
+                // {
+                //   text: 'Weather Now',
+                //   callback_data: JSON.stringify({
+                //     cmd: 'weather',
+                //     meta: {
+                //       lat: latitude,
+                //       long: longitude,
+                //     },
+                //   }),
+                // },
                 {
-                  text: 'Navigate1',
-                  // callback_data: `navigate:${latitude},${longitude}`,
-                  url: mapUrl,
-                }, {
-                  text: 'Navigate2',
-                  // callback_data: `navigate:${latitude},${longitude}`,
-                  url: `navigate:${latitude},${longitude}`,
-                }, {
-                  text: 'Open Map1',
-                  callback_data: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
-                }, {
-                  text: 'Open Map2',
-                  url: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
-                }
+                  text: 'Forecast at pickup',
+                  callback_data: serialize([
+                    'forecastAt', work.firstPickupTime, latitude, longitude,
+                  ]),
+                },
+                {
+                  text: 'Forecast 24 hours',
+                  callback_data: serialize([
+                    'forecast24', latitude, longitude,
+                  ]),
+                },
+                // {
+                //   text: 'Open Map1',
+                //   callback_data: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                // },
+                // {
+                //   text: 'Open Map2',
+                //   url: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                // }
               ]],
             },
           });
@@ -331,9 +352,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 logResults(errors, true);
                 logger.closeGroup(subGid);
               }).catch((e) => {
-                console.error('queuePerSecond', e);
-                throw e;
-              }),
+              console.error('queuePerSecond', e);
+              throw e;
+            }),
           ]);
           logger.log(gid, 'notifyAll done', r);
         } catch (e) {
@@ -350,7 +371,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         const url = chrome.runtime.getURL(request.payload);
         const [testStatus, workStatus, newUIStatus] =
           await Promise.all(
-            [getTestStatus(), getWorkStatus(), getNewUIStatus()]
+            [getTestStatus(), getWorkStatus(), getNewUIStatus()],
           );
         const response = { url, workStatus, testStatus, newUIStatus };
         console.log('response', MessageTypeEnum.getInjectData, response);
