@@ -70,7 +70,11 @@ bot.on('callback_query', async (callbackQuery) => {
   console.log('callbackQuery data', data);
   const { chat: { id: chat_id }, message_id } = message;
 
-  await handleCallbackQuery(chat_id, data, message_id);
+  try {
+    await handleCallbackQuery(chat_id, data, message_id);
+  } catch (error) {
+    console.error('callback_query error', error);
+  }
 });
 
 // Listen for any messages and log them

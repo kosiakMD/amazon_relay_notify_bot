@@ -10,11 +10,16 @@ export async function getForecastAtTime(time, latitude, longitude) {
   // Set the time in Unix timestamp in seconds
   const currentTime = Math.floor(new Date().getTime() / 1000);
   const specificTime = Math.floor(new Date(time).getTime() / 1000);
+  // console.log('specificTime', specificTime);
 
-  const hoursDifference = Math.abs(specificTime - currentTime) / 3600;
+  const secondsInHour = 3600;
+  const hoursDifference = Math.abs(specificTime - currentTime) / secondsInHour;
   // console.log('hoursDifference', hoursDifference);
-  const daysDifference = Math.abs(specificTime - currentTime) / (3600 * 24);
+  const secondsInDay = secondsInHour * 24;
+  // console.log('secondsInDay', secondsInDay);
+  const daysDifference = Math.abs(specificTime - currentTime) / secondsInDay;
   // console.log('daysDifference', daysDifference);
+  const days = 8;
 
   let url = '';
   let closest = null;
@@ -26,30 +31,56 @@ export async function getForecastAtTime(time, latitude, longitude) {
     data = await fetch(url);
     const jsonData = await data.json();
     const hourlyData = jsonData.hourly;
-    closest = hourlyData.find(hour => {
+    const closestSet = hourlyData.filter(hour => {
       // console.log('hour', hour.dt);
-      // console.log('specificTime', specificTime);
-      return Math.abs(hour.dt - specificTime) < 1800;
-    });
-  } else if (daysDifference <= 16) {
+      // // console.log('Math.abs(hour.dt - specificTime) <= 1800', Math.abs(hour.dt - specificTime) <= 1800);
+      // console.log('Math.abs(hour.dt - specificTime)', Math.abs(hour.dt - specificTime));
+      // if (Math.abs(hour.dt - specificTime) <= 1800) {
+        // console.log('hour', hour.dt, specificTime);
+      // }
+      return Math.abs(hour.dt - specificTime) <= 1800;
+    }).sort();
+    closest = closestSet[0];
+  } else if (daysDifference <= days) {
     // If the specific time is more than 2 days but less than 16 days ahead, use the daily forecast.
     url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly&appid=${apiKey}&units=metric&lang=${lang}`;
     data = await fetch(url);
     const jsonData = await data.json();
+    // console.log('jsonData', jsonData);
     const dailyData = jsonData.daily;
-    closest = dailyData.find(day => Math.abs(day.dt - specificTime) < (3600 * 24));
+    // console.log('length', dailyData.length);
+    const closestSet = dailyData.filter(day => {
+      // console.log('day.dt', day.dt);
+      // console.log('specificTime', specificTime);
+      // console.log('day.dt - specificTime', day.dt - specificTime);
+      // console.log('Math.abs(day.dt - specificTime)', Math.abs(day.dt - specificTime));
+      // console.log('day.dt - specificTime <= secondsInDay', Math.abs(day.dt - specificTime) <= secondsInDay);
+      return Math.abs(day.dt - specificTime) <= secondsInDay;
+    }).sort();
+    // console.log('closestSet', closestSet);
+    closest = closestSet[0];
   } else {
     // If the specific time is more than 16 days ahead, return a message stating that the time is too far in the future.
-    return 'The specified time is too far in the future. Please specify a time less than 16 days from now.';
+    return `The specified time is too far in the future. Please specify a time less than ${days} days from now.`;
   }
 
   if (closest) {
+    const date = new Date(time);
+    const options = {
+      timeZone: 'Europe/Warsaw',
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      weekday: 'short',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    };
     let msg = '';
-    msg += `Погода - ${new Date(specificTime * 1000).toUTCString()}:\n`;
+    msg += `Погода - ${date.toLocaleString('uk-UA', options)}\n`;
     msg += `${closest.weather[0].description}, ${closest.temp.day || closest.temp}°C\n`;
     msg += `відчувається як ${closest.feels_like.day || closest.feels_like}°C\n`;
-    msg += `вологість ${closest.humidity}%\n`;
-    msg += `вітер ${closest.wind_speed} m/s`;
+    msg += `вологість ${closest.humidity}%, вітер ${closest.wind_speed} m/s`;
     return msg;
   } else {
     return 'No data available for the specific time';
