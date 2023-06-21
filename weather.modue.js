@@ -92,7 +92,7 @@ export async function getForecast(latitude, longitude, everyHours = 3) {
   const response = await fetch(url);
   const data = await response.json();
 
-  console.log('getForecast data', data);
+  // console.log('getForecast data', data);
 
   if (data && data.hourly) {
     const currentTime = Math.floor(Date.now() / 1000); // Get current Unix timestamp in seconds
@@ -136,7 +136,7 @@ export async function getWeather(latitude, longitude) {
   const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric&lang=${lang}`);
   const data = await response.json();
 
-  console.log('getWeather data', data);
+  // console.log('getWeather data', data);
 
   if (data && data.main) {
     return `Погода: ${data.weather[0].description}, ${data.main.temp}°C\n
