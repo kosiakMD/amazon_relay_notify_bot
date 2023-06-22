@@ -30,6 +30,7 @@ export async function getForecastAtTime(time, latitude, longitude) {
     url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,daily&appid=${apiKey}&units=metric&lang=${lang}`;
     data = await fetch(url);
     const jsonData = await data.json();
+    // console.log('jsonData', jsonData);
     const hourlyData = jsonData.hourly;
     const closestSet = hourlyData.filter(hour => {
       // console.log('hour', hour.dt);
