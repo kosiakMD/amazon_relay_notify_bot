@@ -39,18 +39,27 @@ async function handleCallbackQuery(chatId, stringData, message_id) {
     switch (command) {
       case 'weather': {
         const [lat, long] = meta;
+        if (!lat || !long) {
+          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
+        }
         let weather = await getWeather(lat, long);
         await bot.sendMessage(chatId, weather, options);
         break;
       }
       case 'forecastAt': {
         const [time, lat, long] = meta;
+        if (!time || !lat || !long) {
+          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
+        }
         const forecast = await getForecastAtTime(time, lat, long);
         await bot.sendMessage(chatId, forecast, options);
         break;
       }
       case 'forecast24': {
         const [lat, long] = meta;
+        if (!lat || !long) {
+          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
+        }
         const forecast = await getForecast(lat, long);
         await bot.sendMessage(chatId, forecast, options);
         break;
@@ -62,6 +71,7 @@ async function handleCallbackQuery(chatId, stringData, message_id) {
     }
   } catch (error) {
     // console.error('handleCallbackQuery error', error);
+    console.error(error);
     console.error('handleCallbackQuery error', error.code, error.message);
     await bot.sendMessage(chatId, 'Error: ' + error.message, options);
   }
