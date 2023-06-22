@@ -1,3 +1,4 @@
+import { startServer } from './server.js';
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
 import { getForecast, getForecastAtTime, getWeather } from './weather.modue.js';
@@ -7,6 +8,7 @@ dotenv.config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
+startServer();
 
 // Create a new bot instance
 const bot = new TelegramBot(token, { polling: true });
@@ -26,7 +28,7 @@ async function handleCommand(command, msg) {
 }
 
 async function handleCallbackQuery(chatId, stringData, message_id) {
-  const data = deserialize(stringData)
+  const data = deserialize(stringData);
   const [command, ...meta] = data;
   console.log('command', command);
   console.log('meta', meta);
