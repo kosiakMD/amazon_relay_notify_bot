@@ -35,8 +35,12 @@
     /*justify-content: center;*/
 }
 
+html {
+    width: 220px;
+}
+
 body {
-    width: 150px;
+    width: auto;
     font-size: 14px;
     background: var(--mainColor);
     color: var(--superLightColor);

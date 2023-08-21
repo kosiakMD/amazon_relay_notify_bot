@@ -35,7 +35,7 @@
 // longitude // 14.194901
 // https://www.google.pl/maps/@<lat>,<lon>,<zoom>z
 // https://www.google.com/maps/place/42.430903,14.194901/@<42.430903>,<14.194901>,10z
-/** @type (work: Work) => String */
+/** @type {(work: Work) => string} */
 const createMapUrl = (work) => {
   const { latitude: lat, longitude: lon } = work.endLocation;
   // return `[Google Map](https://www.google.com/maps/place/${lat},${lon}/@<${lat}>,<${lon}>,10z)`;
