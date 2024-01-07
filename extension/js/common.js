@@ -220,15 +220,23 @@ const saveFieldValue = (field, v) => {
 
 const createSaveStorageField = (field) => (value) => saveFieldValue(field, value);
 
-const saveInterval = createSaveStorageField(intervalField);
+function reloadPages() {
+  chrome.tabs.query({ url: workUrl }, (tabs) => {
+    tabs.forEach((tab) => {
+      chrome.tabs.reload(tab.id);
+    });
+  });
+}
 
-const saveWorkStatus = createSaveStorageField(workStatusField);
+const setInterval = createSaveStorageField(intervalField);
 
-const saveTestStatus = createSaveStorageField(testStatusField);
+const setWorkStatus = createSaveStorageField(workStatusField);
 
-const saveNewUIStatus = createSaveStorageField(newUIField);
+const setTestStatus = createSaveStorageField(testStatusField);
 
-const saveDarkThemeStatus = createSaveStorageField(darkThemeField);
+const setNewUIStatus = createSaveStorageField(newUIField);
+
+const setDarkThemeStatus = createSaveStorageField(darkThemeField);
 
 const asyncQueue = async (asyncArr, limit) => {
   let q = 0;
@@ -257,6 +265,31 @@ const asyncQueue = async (asyncArr, limit) => {
     (f) => handleAsync(f),
   ));
   return { success, errors };
+};
+
+/**
+ * Formats the given date and time into 'dd.mm.yy h:m' (24-hour) format.
+ * @param {string} dateTime - The date and time to format.
+ * @param {boolean} withSeconds - Whether to include seconds in the time.
+ * @param {boolean} convertToCET - Whether to convert the date and time to Central European Time (Poland).
+ * @returns {string} - The formatted date and time.
+ */
+const getDateTime = (dateTime, withSeconds = false, convertToCET) => {
+  let date = new Date(dateTime);
+  // Convert to Central European Time (Poland)
+  if (convertToCET) {
+    date = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+  }
+
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth() returns 0-11
+  const year = date.getFullYear().toString().slice(-2);
+
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+
+  return `${day}.${month}.${year} ${hours}:${minutes}${withSeconds ? `:${seconds}` : ''}`;
 };
 
 async function queuePerSecond(arr, limit, log = false) {
@@ -359,3 +392,94 @@ function serialize(array) {
 function deserialize(string) {
   return string.split(';');
 }
+
+class TaskQueue {
+  constructor() {
+    this.queue = [];       // Holds tasks waiting to be processed
+    this.isProcessing = false;  // Indicates if a task is currently being processed
+  }
+
+  // Add a new task to the queue
+  enqueue(task) {
+    console.log('____________ADD TASK_____________');
+    this.queue.push(task);
+    this.runNextTask(); // Try to run the next task
+  }
+
+  // Try to run the next task in the queue
+  runNextTask() {
+    if (!this.isProcessing && this.queue.length > 0) {
+      console.log('_________START PROCESSING_________', new Date().toTimeString(), this.queue.length);
+      this.isProcessing = true;  // Mark as processing
+      const task = this.queue.shift();  // Get the next task from the queue
+      this.executeWithRetry(task, 3, 1000) // Execute the task with retry logic
+          .then(() => {
+            this.isProcessing = false; // Mark as not processing
+            this.runNextTask(); // Check for and run the next task
+          })
+          .catch(error => {
+            console.error("Error executing task: ", error);
+            this.isProcessing = false;
+            this.runNextTask(); // Even if there's an error, try to run the next task
+          });
+    }
+  }
+
+  // Execute a task with a given number of retries
+  async executeWithRetry(task, retries, delay) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        if (typeof task === 'function') {
+          await task(getDateTime(new Date(), true)); // Execute the task (works for both promises and async functions)
+        } else {
+          await task; // Execute the task (works for both promises and async functions)
+        }
+        await this.delay(1000); // Wait for 1 second before returning
+        return; // If successful, exit the function
+      } catch (error) {
+        console.error(`Attempt ${attempt} failed: ${error}`);
+        if (attempt < retries) {
+          await this.delay(delay * attempt); // Exponential backoff
+        }
+      }
+    }
+    throw new Error('All attempts failed.'); // If all retries fail, throw an error
+  }
+
+  // Utility function to create a delay
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+const queue = new TaskQueue();
+
+const euCountries = {
+  AT: '🇦🇹', // Austria
+  BE: '🇧🇪', // Belgium
+  BG: '🇧🇬', // Bulgaria
+  HR: '🇭🇷', // Croatia
+  CY: '🇨🇾', // Cyprus
+  CZ: '🇨🇿', // Czech Republic
+  DK: '🇩🇰', // Denmark
+  EE: '🇪🇪', // Estonia
+  FI: '🇫🇮', // Finland
+  FR: '🇫🇷', // France
+  DE: '🇩🇪', // Germany
+  GR: '🇬🇷', // Greece
+  HU: '🇭🇺', // Hungary
+  IE: '🇮🇪', // Ireland
+  IT: '🇮🇹', // Italy
+  LV: '🇱🇻', // Latvia
+  LT: '🇱🇹', // Lithuania
+  LU: '🇱🇺', // Luxembourg
+  MT: '🇲🇹', // Malta
+  NL: '🇳🇱', // Netherlands
+  PL: '🇵🇱', // Poland
+  PT: '🇵🇹', // Portugal
+  RO: '🇷🇴', // Romania
+  SK: '🇸🇰', // Slovakia
+  SI: '🇸🇮', // Slovenia
+  ES: '🇪🇸', // Spain
+  SE: '🇸🇪', // Sweden
+};

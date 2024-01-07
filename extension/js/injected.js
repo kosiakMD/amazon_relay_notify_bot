@@ -134,7 +134,30 @@ const TEST = true;
     console.groupEnd();
   }, false);
 
-  const handler = async (response) => {
+  /**
+   * @typedef {{
+   *    response: {
+   *      workOpportunities: Work[],
+   *    },
+   *    requestBody: {
+   *      originCity: {
+   *        displayValue: string,
+   *      },
+   *    }
+   * }} DATA
+   * */
+  /**
+   * @typedef {{
+   *    type:MessageTypeEnum,
+   *    data:DATA,
+   *    ex:string,
+   *  }} SearchMessage
+   * */
+  /**
+   * @param {Response} response
+   * @param {RequestInit} request
+   * */
+  const handler = async (response, request) => {
     if (!config.workStatus && !config.testStatus) return response;
     // _r = response;
     // console.log('\t\nfetch response', response);
@@ -142,7 +165,10 @@ const TEST = true;
     if (response.url === workUrl) {
       const _r = response.clone();
       if (response.ok) {
-        const data = await _r.json();
+        const data = {
+          response: await _r.json(),
+          requestBody: JSON.parse(request.body),
+        };
         console.log('fetch ok', data);
         try {
           window.postMessage({ type: 'search', data: data, ex: extensionId });
@@ -158,6 +184,6 @@ const TEST = true;
 
   fetch = function (resource, options) {
     console.log('fetch request', resource, options);
-    return _fetch.apply(this, [resource, options]).then(handler);
+    return _fetch.apply(this, [resource, options]).then((response) => handler(response, options));
   };
 })(fetch);

@@ -9,7 +9,7 @@ const config = {
 };
 
 const getRefreshBtn = (newUIStatus) => newUIStatus
-  ? $('#utility-bar button')[0]
+  ? $('#utility-bar button')[2] // 3rd button
   : $('#filter-summary-panel button')[1];
 
 const refresh = (newUIStatus) => {
@@ -182,7 +182,9 @@ function sendElevatedPriceWorks(works, location) {
 }
 
 // listener to messages
-window.addEventListener('message', async function (event) {
+/** @param {string} type */
+/** @param {MessageEvent<SearchMessage>} event */
+const messageListener = async function (event) {
   // console.log('event', event);
   // filter event messages by extension id
   if (event.source === window && event.data.ex === chrome.runtime.id) {
@@ -191,19 +193,20 @@ window.addEventListener('message', async function (event) {
     console.log('My message', event.data.data);
 
     const location = await getNewUIStatus()
-      ? $('[mdn-input-box]').eq(0).find('input').val()
-      : $('[mdn-select-value]').eq(1).text();
+        ? $('[mdn-input-box]').eq(0).find('input').val()
+        : $('[mdn-select-value]').eq(1).text();
 
     if (event.data.type === MessageTypeEnum.search) {
-      const works = event.data.data.workOpportunities;
+      const works = event.data.data.response.workOpportunities;
       // handle new Works
+      // TODO: now summary and each message sending by 'sendNewWorks' instead of separate sendElevatedPriceWorks
       const newWorks = WorkHelper.getNewWorks(works);
       console.log('newWorks', newWorks);
       const testMode = await getTestStatus();
       if (newWorks.length) {
         await sendNewWorks(newWorks, location);
       } else if (testMode) {
-        await sendNewWorks(works.slice(0, 1), location);
+        await sendNewWorks(works.slice(0, 3), location);
       }
       // handle elevated price Works
       const elevatedPriceWorks = WorkHelper.getElevatedPriceWorks(works);
@@ -217,7 +220,8 @@ window.addEventListener('message', async function (event) {
     console.groupEnd();
   }
   return true;
-}, false);
+};
+window.addEventListener('message', messageListener, false);
 
 // document.addEventListener('DOMContentLoaded', start);
 $(start);

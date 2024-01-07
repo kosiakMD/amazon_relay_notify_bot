@@ -21,6 +21,7 @@
     "scripting",
     "storage",
     "activeTab",
+    "windows",
     "tabs",
     "webRequest",
     "declarativeNetRequest",

@@ -1,14 +1,20 @@
 console.log('bot.js');
 
-const BartaChat = '-697279153';
-const MyTestChat = '-900942200';
+// # original relay bot
+const prod_bot = '6094248667:AAGEhf8xut4pzdKIMgMAamz4SzsJ9ZdQ910';
+// # Test relay bot
+const test_bot = '6056341149:AAGxOP260405RqdR27pLx4yscj1wPTDTXec';
+const telegram_bot = `bot${prod_bot}`;
 
-const bot_id = '6094248667:AAGEhf8xut4pzdKIMgMAamz4SzsJ9ZdQ910';
-const telegram_bot = `bot${bot_id}`;
-const chat_id = BartaChat; // Barta
-// const chat_id = '-1001975833181'; // Others
-// const chat_3_id = '-956188278'; // Others
-const test_chat_id = MyTestChat; // TEST
+const BartaMalyjChat = '-697279153'; // 697279153 697279153
+const BartaChat = '-1002070356376'; // '-4018989927'; //
+const Others1 = '-956188278';
+const Others2 = '-1001975833181';
+// const MyTestChat1 = '-900942200';
+const MyTestChat2 = '-1001887870285';
+
+const chat_id = BartaChat;
+const test_chat_id = MyTestChat2; // TEST
 // const test_chat_id = '-1001975833181';
 // const test_chat_id = '1232761014';
 
@@ -72,18 +78,19 @@ async function sendMsg(data, geo) {
   const id = 'sendMsg - ' + Math.random().toString(36).substr(2, 9);
   logger.openGroup(id);
   logger.log(id, 'sendMsg');
+  logger.log(id, 'chat_id', await getTestStatus() ? test_chat_id : chat_id);
   const url = 'https://api.telegram.org/' + telegram_bot + '/sendMessage';
   logger.log(id, 'url', url);
   const botData = {
     ...data,
     chat_id: await getTestStatus() ? test_chat_id : chat_id,
     disable_web_page_preview: true,
-    parse_mode: 'Markdown',
-    disable_notification: await getTestStatus(),
+    // parse_mode: 'Markdown',
+    // disable_notification: await getTestStatus(),
     // 'user_id: '',
     // disable_web_page_preview: false,
     // "parse_mode" : "MarkdownV2"
-    // "parse_mode" : "HTML",
+    "parse_mode" : "HTML",
     // latitude: data.latitude,
     // longitude: data.longitude,
   };
@@ -96,4 +103,5 @@ async function sendMsg(data, geo) {
 const bot = {
   // sendMsg,
   log: sendMsg,
+  createPromisedLog: async (data, geo) => sendMsg(data, geo)
 };

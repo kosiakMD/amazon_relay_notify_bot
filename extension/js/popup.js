@@ -57,9 +57,18 @@ const saveAll = async () => {
 };
 
 const sendToAllTabs = async (message) => {
-  const tabs = await chrome.tabs.query({ url: workUrl });
-  console.log('tabs', tabs);
-  await Promise.all(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, message)));
+  try {
+    const tabs = await chrome.tabs.query({ url: workUrl });
+    if (chrome.runtime.lastError) {
+      console.log('sendToAllTabs', chrome.runtime.lastError.message);
+      return;
+    }
+    console.log('tabs', tabs);
+    await Promise.all(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, message)));
+  } catch (e) {
+    console.error('sendToAllTabs', e);
+    throw e;
+  }
 };
 
 // $(() => {
@@ -79,7 +88,7 @@ window.onload = () => {
     const status = value; // ? ConfigEnum.on : ConfigEnum.off;
 
     console.log(workStatusField, status);
-    saveWorkStatus(value);
+    setWorkStatus(value);
 
     try {
       await sendToAllTabs({
@@ -98,7 +107,7 @@ window.onload = () => {
     const status = value; // ? ConfigEnum.on : ConfigEnum.off;
 
     console.log(testStatusField, status);
-    saveTestStatus(value);
+    setTestStatus(value);
 
     try {
       await sendToAllTabs({
@@ -117,7 +126,7 @@ window.onload = () => {
     const status = value; // ? ConfigEnum.on : ConfigEnum.off;
 
     console.log(newUIField, status);
-    saveNewUIStatus(value);
+    setNewUIStatus(value);
 
     // try {
     //   await sendToAllTabs({
@@ -136,7 +145,7 @@ window.onload = () => {
     const status = value; // ? ConfigEnum.on : ConfigEnum.off;
 
     console.log(darkThemeField, status);
-    saveDarkThemeStatus(value);
+    setDarkThemeStatus(value);
     switchTheme(value);
 
     // try {
@@ -161,7 +170,7 @@ window.onload = () => {
     }
 
     console.log(intervalField, value);
-    saveInterval(value);
+    setInterval(value);
   });
 
   const $saveBtn2 = $('#saveBtn');
@@ -184,13 +193,13 @@ window.onload = () => {
     console.groupEnd();
   });
 
-  // const saveInterval = () => storage.set(
+  // const setInterval = () => storage.set(
   //   { [intervalField]: document.getElementById(intervalField).value },
   //   () => {
   //     success(intervalField);
   //   },
   // );
-  // const saveWorkStatus = () => storage.set(
+  // const setWorkStatus = () => storage.set(
   //   { [workStatusField]: document.getElementById(workStatusField).checked },
   //   () => {
   //     success(workStatusField);
@@ -253,4 +262,42 @@ function renderInterceptor(field, value) {
   }
 }
 
-// })();
+// document.addEventListener('blur', (event) => {
+//   // Prevent the default behavior, which is to close the popup
+//   event.preventDefault();
+// }, true);
+//
+// let popupWindowId; // Store the ID of the popup window
+//
+// // Add an event listener for tab activation
+// chrome.tabs.onActivated.addListener((activeInfo) => {
+//   console.log('tabs.onActivated');
+//   // Get the current window
+//   chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
+//     // Check if the popup window is active
+//     if (currentWindow.id === popupWindowId) {
+//       // Refocus the popup window
+//       chrome.windows.update(popupWindowId, { focused: true });
+//     }
+//   });
+// });
+//
+// // Open the popup and store its window ID
+// chrome.browserAction.onClicked.addListener(() => {
+//   console.log('browserAction.onClicked');
+//   chrome.windows.create({
+//     type: 'popup',
+//     url: 'popup.html',
+//     width: 220,
+//     height: 400,
+//   }, (window) => {
+//     popupWindowId = window.id;
+//   });
+// });
+// // })();
+// var popupWindow = window.open(
+//   chrome.extension.getURL("../popup.html"),
+//   "exampleName",
+//   "width=400,height=400"
+// );
+// window.close();

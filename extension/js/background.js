@@ -7,11 +7,11 @@ importScripts('./common.js', './bot.js', './messages.js');
 this.console.log = console.log.bind(this, '____BG\n\t');
 
 if ('serviceWorker' in navigator) {
-  console.log('serviceWorker in navigator');
-  navigator.serviceWorker.register('./background.js', {
-    persistent: true,
-    module: 'module',
-  });
+    console.log('serviceWorker in navigator');
+    navigator.serviceWorker.register('./background.js', {
+        persistent: true,
+        module: 'module',
+    });
 }
 
 console.log('____Background ARB');
@@ -214,10 +214,18 @@ const limitPerSecond = 2;
 //   }
 // });
 
+chrome.runtime.onInstalled.addListener((details) => {
+    setWorkStatus(false);
+    if (details.reason === 'update') {
+        // Extension has been updated, trigger the reload process here
+        reloadPages();
+    }
+});
+
 chrome.runtime.onSuspend.addListener(function () {
-  console.log('Unloading.');
-  chrome.browserAction.setBadgeText({ text: '!!!!!!!' });
-  chrome.action.setBadgeText({ text: '!!!!!!!' });
+    console.log('Unloading.');
+    chrome.browserAction.setBadgeText({text: '!!!!!!!'});
+    chrome.action.setBadgeText({text: '!!!!!!!'});
 });
 
 // Inject a script directly into the page DOM
@@ -226,187 +234,222 @@ chrome.runtime.onSuspend.addListener(function () {
 // });
 // chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  // console.group('Message Listener')
-  switch (request.type) {
-    case MessageTypeEnum.newWorks: {
-      (async () => {
-        const gid = 'newWorks - ' + Math.random().toString(36).substr(2, 9);
-        logger.openGroup(gid);
-        logger.log(gid, 'message type', request.type, request);
-        const location = request.location;
-        /** @type { Work[] } */
-        const newWorks = request.newWorks;
-        const count = newWorks.length;
-        const time = new Date().toLocaleTimeString();
-        let msg = `${time} | New *${count}* works at: *${location}*`;
-        const testStatus = await getTestStatus();
-        if (testStatus) {
-          msg = `\\[TEST\] ${msg}`;
-        }
-
-        // bot = new Bot(request.payload);
-        // bot.start();
-        const notifyLocal = async () => {
-          console.group('notifyLocal');
-          try {
-            const id = chrome.runtime.id;
-            const options = {
-              type: 'basic',
-              title: testStatus ? `[TEST] New Works: ${count}` : `New Works: ${count}`,
-              message: msg,
-              iconUrl: '../icons/icon128.png',
-              // imageUrl: 'icons/icon128.png',
-            };
-            // const id = request.center = 0;
-            const notify = await new Promise((resolve, reject) => {
-              try {
-                chrome.notifications.create(id, options, (notId) => {
-                  console.log('creationCallback, notId', notId, 'extension', id);
-                  resolve(notId);
-                });
-              } catch (e) {
-                reject(e);
-              }
-            });
-            console.log('notify', notify);
-          } catch (e) {
-            return console.error(e);
-          } finally {
-            console.groupEnd();
-          }
-        };
-        const notifySummary = async () => {
-          logger.log(gid, 'notifySummary');
-          return bot.log({ text: msg });
-        };
-        const notifyAll = newWorks.map(async (work) => {
-          logger.log(gid, 'notifyAll');
-          const msg = await createWorkMsg(work, 'new');
-          // logger.log(gid, 'notify each', msg);
-          const { latitude, longitude } = work.endLocation;
-          // const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-          return bot.log({
-            text: msg,
-            // latitude,
-            // longitude,
-            reply_markup: {
-              // need set Navigate button in Telegram message form my bot and open map in new window by click
-              inline_keyboard: [[
-                // {
-                //   text: 'Navigate1',
-                //   // callback_data: `navigate:${latitude},${longitude}`,
-                //   url: mapUrl,
-                // },
-                // {
-                //   text: 'Weather Now',
-                //   callback_data: JSON.stringify({
-                //     cmd: 'weather',
-                //     meta: {
-                //       lat: latitude,
-                //       long: longitude,
-                //     },
-                //   }),
-                // },
-                {
-                  text: 'Forecast at pickup',
-                  callback_data: serialize([
-                    'forecastAt', work.firstPickupTime, latitude, longitude,
-                  ]),
-                },
-                {
-                  text: 'Forecast 24 hours',
-                  callback_data: serialize([
-                    'forecast24', latitude, longitude,
-                  ]),
-                },
-                // {
-                //   text: 'Open Map1',
-                //   callback_data: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
-                // },
-                // {
-                //   text: 'Open Map2',
-                //   url: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+    // console.group('Message Listener')
+    switch (request.type) {
+        case MessageTypeEnum.newWorks: {
+            (async () => {
+                const gid = 'newWorks - ' + Math.random().toString(36).substr(2, 9);
+                logger.openGroup(gid);
+                logger.log(gid, 'message type', request.type, request);
+                const location = request.location;
+                /** @type { Work[] } */
+                const newWorks = request.newWorks;
+                const count = newWorks.length;
+                const time = new Date().toLocaleTimeString();
+                const testStatus = await getTestStatus();
+                // TODO: Temporary disabled send new works count
+                // let msg = `${time} | New *${count}* works at: *${location}*`;
+                // if (testStatus) {
+                //   msg = `\\[TEST\] ${msg}`;
                 // }
-              ]],
-            },
-          });
-        });
-        const logResults = (results, error = false) => {
-          logger.log(gid, 'logResults');
-          const log = error ? logger.error : logger.log;
-          results.length && results.forEach(x => log(gid, x));
-        };
+                // const notifySummary = async () => {
+                //   logger.log(gid, 'notifySummary');
+                //   return bot.log({ text: msg });
+                // };
 
-        try {
-          const r = await Promise.all([
-            // notifyLocal(),
-            // [notifySummary, ...notifyAll].map(f => handleAsync(f)),
-            queuePerSecond([notifySummary, ...notifyAll], 10, true)
-              .then((results) => {
-                const subGid = 'queuePerSecond done - ' + Math.random().toString(36).substr(2, 9);
-                logger.openGroup(subGid, gid);
-                logger.log(subGid, 'queuePerSecond done', results);
-                const { successes, errors } = results;
-                logResults(success);
-                logResults(errors, true);
-                logger.closeGroup(subGid);
-              }).catch((e) => {
-              console.error('queuePerSecond', e);
-              throw e;
-            }),
-          ]);
-          logger.log(gid, 'notifyAll done', r);
-        } catch (e) {
-          return logger.error(gid, e);
-        } finally {
-          logger.closeGroup(gid);
+                // bot = new Bot(request.payload);
+                // bot.start();
+                const notifyLocal = async () => {
+                    console.group('notifyLocal');
+                    try {
+                        const id = chrome.runtime.id;
+                        const options = {
+                            type: 'basic',
+                            title: testStatus ? `[TEST] New Works: ${count}` : `New Works: ${count}`,
+                            message: msg,
+                            iconUrl: '../icons/icon128.png',
+                            // imageUrl: 'icons/icon128.png',
+                        };
+                        // const id = request.center = 0;
+                        const notify = await new Promise((resolve, reject) => {
+                            try {
+                                chrome.notifications.create(id, options, (notId) => {
+                                    console.log('creationCallback, notId', notId, 'extension', id);
+                                    resolve(notId);
+                                });
+                            } catch (e) {
+                                reject(e);
+                            }
+                        });
+                        console.log('notify', notify);
+                    } catch (e) {
+                        return console.error(e);
+                    } finally {
+                        console.groupEnd();
+                    }
+                };
+
+                const logResults = (results, error = false) => {
+                    logger.log(gid, 'logResults');
+                    const log = error ? logger.error : logger.log;
+                    results.length && results.forEach(x => log(gid, x));
+                };
+
+                const notifyAllPromises = newWorks.map((work) => async (timemark) => {
+                    logger.log(gid, 'notifyAll');
+                    const msg = await createWorkMsg(work, timemark, location, 'new');
+                    // logger.log(gid, 'notify each', msg);
+                    const {latitude, longitude} = work.endLocation;
+                    // const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+                    try {
+                        return bot.log({
+                            text: msg,
+                            // latitude,
+                            // longitude,
+                            reply_markup: {
+                                // need set Navigate button in Telegram message form my bot and open map in new window by click
+                                inline_keyboard: [[
+                                    {
+                                        text: 'Add to 📅',
+                                        url:
+                                            `https://amazon-relay-bot-9cd969281a98.herokuapp.com/generate-ics?startTime=${work.firstPickupTime
+                                        }&endTime=${work.lastDeliveryTime
+                                        }&startCity=${work.startLocation.city
+                                        }&startPostal=${work.startLocation.postalCode
+                                        }&startCountry=${work.startLocation.country
+                                        }&endCity=${work.endLocation.city
+                                        }&endPostal=${work.endLocation.postalCode
+                                        }&endCountry=${work.endLocation.country
+                                        }&lat=${latitude
+                                        }&lon=${longitude}`,
+                                    },
+                                ], [
+                                    // {
+                                    //   text: 'Navigate1',
+                                    //   // callback_data: `navigate:${latitude},${longitude}`,
+                                    //   url: mapUrl,
+                                    // },
+                                    // {
+                                    //   text: 'Weather Now',
+                                    //   callback_data: JSON.stringify({
+                                    //     cmd: 'weather',
+                                    //     meta: {
+                                    //       lat: latitude,
+                                    //       long: longitude,
+                                    //     },
+                                    //   }),
+                                    // },
+                                    {
+                                        text: '🌤️ at pickup',
+                                        callback_data: serialize([
+                                            'forecastAt', work.firstPickupTime, latitude, longitude,
+                                        ]),
+                                    },
+                                    {
+                                        text: '🌤️ 24 hours',
+                                        callback_data: serialize([
+                                            'forecast24', latitude, longitude,
+                                        ]),
+                                    },
+                                    // {
+                                    //   text: 'Open Map1',
+                                    //   callback_data: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                                    // },
+                                    // {
+                                    //   text: 'Open Map2',
+                                    //   url: `geo:<${latitude}>,<${longitude}>?q=<${latitude}>,<${longitude}>`,
+                                    // }
+                                ]],
+                            },
+                        }).then((res) => {
+                            logResults(res);
+                        });
+                    } catch (e) {
+                        logResults(e, true);
+                        console.group('notifyAll');
+                        console.error(work.id, e);
+                        console.info(work.startLocation.city, work.startLocation.country);
+                        console.info(work.endLocation.city, work.endLocation.country);
+                        console.groupEnd();
+                        throw e;
+                    }
+                });
+
+                try {
+                    // const r = await Promise.all([
+                    // notifyLoc´al(),
+                    // [notifySummary, ...notifyAll].map(f => handleAsync(f)),
+                    // queuePerSecond([notifySummary, ...notifyAll], 10, true)
+                    //   .then((results) => {
+                    //     const subGid = 'queuePerSecond done - ' + Math.random().toString(36).substr(2, 9);
+                    //     logger.openGroup(subGid, gid);
+                    //     logger.log(subGid, 'queuePerSecond done', results);
+                    //     const { successes, errors } = results;
+                    //     logResults(success);
+                    //     logResults(errors, true);
+                    //     logger.closeGroup(subGid);
+                    //   }).catch((e) => {
+                    //   console.error('queuePerSecond', e);
+                    //   throw e;
+                    // }),
+                    // ]);
+                    console.log('notifyAll', notifyAllPromises);
+                    notifyAllPromises.map((f) => queue.enqueue(f));
+                    logger.log(gid, 'notifyAll done');
+                } catch (e) {
+                    return logger.error(gid, e);
+                } finally {
+                    logger.closeGroup(gid);
+                }
+            })();
+            break;
         }
-      })();
-      break;
-    }
-    case MessageTypeEnum.getInjectData: {
-      (async () => {
-        console.log('message type', request.type, request);
-        const url = chrome.runtime.getURL(request.payload);
-        const [testStatus, workStatus, newUIStatus] =
-          await Promise.all(
-            [getTestStatus(), getWorkStatus(), getNewUIStatus()],
-          );
-        const response = { url, workStatus, testStatus, newUIStatus };
-        console.log('response', MessageTypeEnum.getInjectData, response);
-        return response;
-      })().then(sendResponse);
-      break;
-    }
-    case MessageTypeEnum.getTabId: {
-      console.log('message type', request.type, request);
-      chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      }, function (tabs) {
-        const currentTabId = tabs[0].id;
-        console.log('response currentTabId', currentTabId);
-        sendResponse({ tabId: currentTabId });
+        case MessageTypeEnum.getInjectData: {
+            (async () => {
+                console.log('message type', request.type, request);
+                const url = chrome.runtime.getURL(request.payload);
+                const [testStatus, workStatus, newUIStatus] =
+                    await Promise.all(
+                        [getTestStatus(), getWorkStatus(), getNewUIStatus()],
+                    );
+                const response = {url, workStatus, testStatus, newUIStatus};
+                console.log('response', MessageTypeEnum.getInjectData, response);
+                return response;
+            })().then(sendResponse).catch((e) => {
+                console.error('getInjectData', e);
+                throw e;
+            });
+            break;
+        }
+        case MessageTypeEnum.getTabId: {
+            console.log('message type', request.type, request);
+            chrome.tabs.query({
+                active: true,
+                currentWindow: true,
+            }, function (tabs) {
+                const currentTabId = tabs[0].id;
+                console.log('response currentTabId', currentTabId);
+                sendResponse({tabId: currentTabId});
 
-        // setTimeout(() => {
-        //   chrome.scripting.executeScript({
-        //     target: { tabId: currentTabId },
-        //     func: () => {
-        //       // alert("Hello, world!");
-        //       // inject(request.payload);
-        //     },
-        //     // code: 'alert("Hello, world!");'
-        //     // files: ['injected'],
-        //   }).then((...args) => {
-        //     console.log('script is injected', args);
-        //   });
-        // }, 0);
-      });
-      break;
+                // setTimeout(() => {
+                //   chrome.scripting.executeScript({
+                //     target: { tabId: currentTabId },
+                //     func: () => {
+                //       // alert("Hello, world!");
+                //       // inject(request.payload);
+                //     },
+                //     // code: 'alert("Hello, world!");'
+                //     // files: ['injected'],
+                //   }).then((...args) => {
+                //     console.log('script is injected', args);
+                //   });
+                // }, 0);
+            });
+            break;
+        }
     }
-  }
-  // console.log('return true', request.type);
-  return true;
+    // console.log('return true', request.type);
+    return true;
 });
 // });

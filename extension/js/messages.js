@@ -42,36 +42,36 @@ const createMapUrl = (work) => {
   // return `<a href="https://www.google.com/maps/place/${lat},${lon}/@<${lat}>,<${lon}>,10z">Google Map</a>`;
   // return `<a target="_self" href="https://www.google.com/maps/place/${lat},${lon}">Google Map</a>`;
   // return `[Google Map](https://www.google.com/maps/place/${lat},${lon})`;
-  return `[Location](https://www.google.com/maps/search/?api=1&query=${lat},${lon})`;
+  return `<a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}">🗺️ Location</a>`;
   // return `[Google Map](https://www.google.com/maps/@${lat},${lon},13z)`;
 };
-/** @type (Location) => string */
+/** @param {Location} location - The location to format.
+ * @returns {string} - The formatted location.*/
 const getPoint = (location) => {
   const city = location.city.replace(`${location.postalCode}, `, '');
-  return `*${location.stopCode}* ${city}, ${location.country}`;
+  return `<b>${location.stopCode}</b> ${city} ${euCountries[location.country.toUpperCase()]}`;
 };
-/** @type (string) => string */
-const getDate = (dateTime) => {
-  return new Date(dateTime).toLocaleString().slice(0, -3);
-};
-/** @type (number) => string */
+
+/** @type {(float: number) => string} */
 const normNumber = (float) => {
   return float.toFixed(2).replace(/\./g, ',');
 };
 
-/** @type {(work: Work, type?: string) => Promise<string>} */
-const createWorkMsg = async (work, type = 'new') => {
-  let msg = await getTestStatus() ? '\\[TEST\]\n' : '';
+/** @type {(work: Work, timemark: string, location: string, type?: string) => Promise<string>} */
+const createWorkMsg = async (work, timemark, location, type = 'new') => {
+  let msg = await getTestStatus() ? '\[TEST\]\n' : '';
   if (type === 'price') {
-    msg += '🔺💰 *Price increase*\n';
+    msg += '🔺💰 <b><u>Price increase</u></b>\n';
   }
   msg += `📍 ${getPoint(work.startLocation)}\n`;
-  msg += `⬅️ ${getDate(work.firstPickupTime)}\n`;
+  msg += `🚚 \t\t\t\t<code>${getDateTime(work.firstPickupTime, false, true)}</code>\n`;
   msg += `🏁 ${getPoint(work.endLocation)}\n`;
-  msg += `➡️ ${getDate(work.lastDeliveryTime)}\n`;
-  msg += `💰 *${normNumber(work.payout.value)}* ${work.payout.unit}`;
+  msg += `➡️ \t\t\t\t<code>${getDateTime(work.lastDeliveryTime, false, true)}</code>\n`;
+  msg += `💰 <b>${normNumber(work.payout.value)}</b> ${work.payout.unit}`;
   msg += ` - ${normNumber(work.payout.value / work.totalDistance.value)} ${work.payout.unit}/${work.totalDistance.unit}\n`;
-  msg += `🚚 ${normNumber(work.totalDistance.value)} ${work.totalDistance.unit}\n`;
+  msg += `🛣 ${normNumber(work.totalDistance.value)} ${work.totalDistance.unit}\n`;
+  msg += `<blockquote>🔎 ${location}\n`;
+  msg += `⏰ Message sent: ${timemark}</blockquote>\n`;
   msg += createMapUrl(work);
   return msg;
 };
