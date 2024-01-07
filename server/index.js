@@ -1,105 +1,92 @@
 import { startServer } from './server.js';
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
-import { getForecast, getForecastAtTime, getWeather } from './weather.modue.js';
-import { deserialize } from './utils.js';
+import { weatherBot } from './bots/weather/weatherBot.js';
+import { callbackQuery, onLocationCallback } from './bots/weather/on/index.js';
+import { onEnum } from './enum.js';
+import { handleCommand } from './commands.js';
+import { relayBot } from './bots/relay/relayBot.js';
 
-dotenv.config();
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-
+// for Heroku - it stops script if port is not bound
 startServer();
 
-// Create a new bot instance
-const bot = new TelegramBot(token, { polling: true });
-
-async function handleCommand(command, msg) {
-  switch (command) {
-    case 'chatid':
-      await bot.sendMessage(msg.chat.id, `Current chat ID is: ${msg.chat.id}`);
-      break;
-    case 'userid':
-      // send back telegram user id who sent message
-      await bot.sendMessage(msg.chat.id, `Your ID is: ${msg.from.id}`);
-      break;
-    default:
-      await bot.sendMessage(msg.chat.id, 'Unknown command.');
-  }
-}
-
-async function handleCallbackQuery(chatId, stringData, message_id) {
-  const data = deserialize(stringData);
-  const [command, ...meta] = data;
-  console.log('command', command);
-  console.log('meta', meta);
-  // if message_id response to message
-  const options = message_id ? { reply_to_message_id: message_id } : undefined;
-
-  try {
-    switch (command) {
-      case 'weather': {
-        const [lat, long] = meta;
-        if (!lat || !long) {
-          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
-        }
-        let weather = await getWeather(lat, long);
-        await bot.sendMessage(chatId, weather, options);
-        break;
-      }
-      case 'forecastAt': {
-        const [time, lat, long] = meta;
-        if (!time || !lat || !long) {
-          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
-        }
-        const forecast = await getForecastAtTime(time, lat, long);
-        await bot.sendMessage(chatId, forecast, options);
-        break;
-      }
-      case 'forecast24': {
-        const [lat, long] = meta;
-        if (!lat || !long) {
-          throw new Error(`Wrong/Empty params: [${meta.join(', ')}]`)
-        }
-        const forecast = await getForecast(lat, long);
-        await bot.sendMessage(chatId, forecast, options);
-        break;
-      }
-      default: {
-        await bot.sendMessage(chatId, 'Unknown command.', options);
-        break;
+/**
+ * @template T
+ * @callback ListenerHandler
+ * @param {T} listener
+ * @param {string} event
+ * // @return {(data: t) => Promise<void>}
+ * @return {T}
+ * */
+/** @type ListenerHandler */
+const listenerHandler = (listener, event) => {
+  return async (data) => {
+    try {
+      return await listener(data);
+    } catch (e) {
+      await weatherBot.sendMessage(data.chat.id || data.message.chat.id, `Bot error on ${event} handler`);
+    }
+  };
+};
+const relayListenerHandler = (listener, event) => {
+  return async (data) => {
+    // console.log('relayListenerHandler data', data);
+    const bot2Username = 'Amazon_Relay_Test_Bot';
+    try {
+      return await listener(data);
+    } catch (e) {
+      // console.log('error code', e.code);
+      // console.log('error message', e.message);
+      console.log('error json', e.toJSON());
+      if (e.message === 'ETELEGRAM: 400 Bad Request: chat not found'
+        || e.message === 'ETELEGRAM: 403 Forbidden: bot was kicked from the group chat'
+        || e.message === 'ETELEGRAM: 403 Forbidden: bot is not a member of the supergroup chat'
+        || e.message === 'ETELEGRAM: 403 Forbidden: bot was blocked by the user'
+        || e.message === 'ETELEGRAM: 403 Forbidden: bot is not a member of the channel chat'
+        || e.message === 'ETELEGRAM: 403 Forbidden: bot was kicked from the supergroup chat'
+    ) {
+        const weatherBotName = (await weatherBot.getMe()).username;
+        console.log(`Bot ${weatherBotName} is not a member of the group chat`);
+        // You can use the `switch_inline_query` field of the InlineKeyboardButton
+        // to send an inline query to bot2 when the button is pressed.
+        // You'll need to handle this query in bot2 code
+        const opts = {
+          reply_markup: JSON.stringify({
+            inline_keyboard: [
+              [
+                {
+                  text: `Add @${weatherBotName}`,
+                  url: `https://t.me/${weatherBotName}`,
+                },
+              ],
+            ],
+          }),
+        };
+        await relayBot.sendMessage(data.chat?.id || data.message.chat.id, `Please add @${weatherBotName} to this group for weather updates.`, opts);
+      } else {
+        await relayBot.sendMessage(data.chat?.id || data.message.chat.id, `Bot error on ${event} handler`);
       }
     }
-  } catch (error) {
-    // console.error('handleCallbackQuery error', error);
-    console.error(error);
-    console.error('handleCallbackQuery error', error.code, error.message);
-    await bot.sendMessage(chatId, 'Error: ' + error.message, options);
-  }
-}
+  };
+};
 
-bot.on('callback_query', async (callbackQuery) => {
-  const { message, data } = callbackQuery;
-  console.log('callbackQuery data', data);
-  const { chat: { id: chat_id }, message_id } = message;
+const onCallbackQuery = listenerHandler(callbackQuery, onEnum.callback_query);
+const onRelayCallbackQuery = relayListenerHandler(callbackQuery, onEnum.callback_query);
 
-  try {
-    await handleCallbackQuery(chat_id, data, message_id);
-  } catch (error) {
-    console.error('callback_query error', error);
-  }
-});
+weatherBot.on(onEnum.callback_query, onCallbackQuery);
+relayBot.on(onEnum.callback_query, onRelayCallbackQuery);
 
 // Listen for any messages and log them
-bot.on('message', async (msg) => {
-  console.log('msg.chat', msg.chat);
-  const botId = (await bot.getMe()).id;
+weatherBot.on('message', async (msg) => {
+  console.log('on(message)', 'msg', msg);
+  // console.log('on(message)', 'msg.chat', msg.chat);
+  const botId = (await weatherBot.getMe()).id;
 
   // handle callback_data CallbackQuery
   // and handle as others
-  if (msg.callback_query) {
-    console.log('msg.callback_query', msg.callback_query);
-    await handleCommand('weather', msg.callback_query.data);
-  }
+  // if (msg.callback_query) {
+  //   console.log('msg.callback_query', msg.callback_query);
+  //   await handleCommand('weather', msg.callback_query.data);
+  // }
 
   if (msg.new_chat_member && msg.new_chat_member.id === botId) {
     console.log('Bot added to chat:', msg.chat.id);
@@ -120,13 +107,17 @@ bot.on('message', async (msg) => {
       console.log('message', msg);
       const command = match[1];
       console.log('Command:', command);
-      await handleCommand(command, msg);
+      await handleCommand(command, msg.chat, msg.from);
     }
   }
 });
 
 // Log any errors
-bot.on('polling_error', (error) => {
-  console.log(error);
+weatherBot.on('polling_error', (error) => {
+  console.log(error.message);
 });
+
+const onLocation = listenerHandler(onLocationCallback, onEnum.location);
+
+weatherBot.on(onEnum.location, onLocation);
 

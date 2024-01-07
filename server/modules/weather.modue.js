@@ -78,7 +78,7 @@ export async function getForecastAtTime(time, latitude, longitude) {
       minute: '2-digit',
     };
     let msg = '';
-    msg += `Погода - ${date.toLocaleString('uk-UA', options)}\n`;
+    msg += `Погода: ${date.toLocaleString('uk-UA', options)}\n`;
     msg += `${closest.weather[0].description}, ${closest.temp.day || closest.temp}°C\n`;
     msg += `відчувається як ${closest.feels_like.day || closest.feels_like}°C\n`;
     msg += `вологість ${closest.humidity}%, вітер ${closest.wind_speed} m/s`;
@@ -88,6 +88,12 @@ export async function getForecastAtTime(time, latitude, longitude) {
   }
 }
 
+/**
+ * @param {string | number} latitude
+ * @param {string | number} longitude
+ * @param {number} [everyHours=3]
+ * @return {Promise<string|undefined>}
+ */
 export async function getForecast(latitude, longitude, everyHours = 3) {
   const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=current,minutely,daily&appid=${apiKey}&units=metric&lang=${lang}`;
   const response = await fetch(url);
@@ -103,7 +109,7 @@ export async function getForecast(latitude, longitude, everyHours = 3) {
       return index % everyHours === 0;
     });
     // console.log('filteredData', filteredData);
-    let message = data.timezone + '\n';
+    let message = `Timezone: ${data.timezone}\n`;
     filteredData.forEach(entry => {
       // console.log('entry', entry);
       // Convert Unix timestamp to a Date object
@@ -117,7 +123,7 @@ export async function getForecast(latitude, longitude, everyHours = 3) {
       const formattedTime = hours + ':' + minutes.substr(-2);
       // console.log('formattedTime', formattedTime);
       // console.log('entry.weather', entry.weather);
-      message += `${formattedTime} - ${entry.temp}°C, ${entry.weather[0].description}, ${entry.wind_speed}m/s, ${entry.humidity}%\n`;
+      message += `*${formattedTime}* ${entry.temp}°C\n${entry.weather[0].description}, ${entry.wind_speed}m/s, ${entry.humidity}%\n`;
       // return {
       //   time: hour.dt,
       //   temp: hour.temp,
@@ -133,6 +139,11 @@ export async function getForecast(latitude, longitude, everyHours = 3) {
 }
 
 // get current weather
+/**
+ * @param {string | number} latitude
+ * @param {string | number} longitude
+ * @return {Promise<string|undefined>}
+ */
 export async function getWeather(latitude, longitude) {
   const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric&lang=${lang}`);
   const data = await response.json();
@@ -140,10 +151,11 @@ export async function getWeather(latitude, longitude) {
   // console.log('getWeather data', data);
 
   if (data && data.main) {
-    return `Погода: ${data.weather[0].description}, ${data.main.temp}°C\n
-    відчувається як ${data.main.feels_like}°C\n 
-    вологість ${data.main.humidity}%\n
-    вітер ${data.wind.speed} m/s`;
+    let msg = `Погода: ${data.weather[0].description}, ${data.main.temp}°C\n`;
+    msg += `відчувається як ${data.main.feels_like}°C\n`;
+    msg += `вологість ${data.main.humidity}%\n`;
+    msg += `вітер ${data.wind.speed} m/s`;
+    return msg;
   } else {
     throw new Error('Could not get weather data.');
   }
