@@ -7,7 +7,7 @@ import { chatSessions } from '../../../session.js';
 const logContext = 'bot.on(callback_query)';
 
 /** @type OnCallbackQueryCallback */
-export const callbackQuery = async (queryData) => {
+export const callbackQuery = async (queryData, anotherBot = false) => {
   console.log(logContext, queryData);
   const {
     message: msg,
@@ -56,7 +56,7 @@ export const callbackQuery = async (queryData) => {
           await handleCommand(command, msg.chat, queryData.from);
         } else {
           let weather = await getWeather(lat, long);
-          await weatherBot.sendMessage(chatId, weather, options);
+          await weatherBot.sendMessage(chatId, weather, !anotherBot && options);
         }
         break;
       }
@@ -73,7 +73,7 @@ export const callbackQuery = async (queryData) => {
           // await handleCommand(command, msg);
         }
         const forecast = await getForecastAtTime(time, lat, long);
-        await weatherBot.sendMessage(chatId, forecast, options);
+        await weatherBot.sendMessage(chatId, forecast, !anotherBot && options);
         break;
       }
       case 'forecast24': {
@@ -84,19 +84,19 @@ export const callbackQuery = async (queryData) => {
           // await handleCommand(command, msg);
         }
         const forecast = await getForecast(lat, long);
-        await weatherBot.sendMessage(chatId, forecast, options);
+        await weatherBot.sendMessage(chatId, forecast, !anotherBot && options);
         break;
       }
       default: {
         console.log('default');
-        await weatherBot.sendMessage(chatId, 'Unknown command.', options);
+        await weatherBot.sendMessage(chatId, 'Unknown command.', !anotherBot && options);
         break;
       }
     }
   } catch (error) {
     console.error('callback_query error', error);
     // console.error('handleCallbackQuery error', error.code, error.message);
-    await weatherBot.sendMessage(chatId, 'Error: ' + error.message, options);
+    await weatherBot.sendMessage(chatId, 'Error: ' + error.message, !anotherBot && options);
   }
 
 };

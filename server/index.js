@@ -37,7 +37,7 @@ const relayListenerHandler = (listener, event) => {
     const bot2Username = 'Amazon_Relay_Test_Bot';
     try {
       console.log('relayListenerHandler event', event);
-      return await listener(data);
+      return await listener(data, true);
     } catch (e) {
       // console.log('error code', e.code);
       // console.log('error message', e.message);
