@@ -54,12 +54,20 @@ export async function handleCommand(command, chat, from) {
       await weatherBot.sendMessage(chatId, `Your ID is: ${from.id}`);
       break;
     case 'forecast': {
+      if (chatType !== 'private') {
+        await weatherBot.sendMessage(chatId, 'Forecast is available only in private chat.');
+        break;
+      }
       // Set the context for this chat to 'forecast'
       chatSessions[chatId] = { context: contextEnum.forecast };
       await requestLocation(chatId);
       break;
     }
     case 'weather': {
+      if (chatType !== 'private') {
+        await weatherBot.sendMessage(chatId, 'Forecast is available only in private chat.');
+        break;
+      }
       // Set the context for this chat to 'weather'
       chatSessions[chatId] = { context: contextEnum.weather };
       await requestLocation(chatId);
