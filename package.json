@@ -4,11 +4,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "deploy-server": "cd .. && bash deploy.sh"
+    "start": "node ./server/index.js",
+    "deploy-server": "bash deploy.sh"
   },
   "dependencies": {
     "dotenv": "16.0.3",
+    "ical-generator": "^6.0.0",
     "node-fetch": "^3.3.1",
     "node-telegram-bot-api": "0.53.0"
   }
