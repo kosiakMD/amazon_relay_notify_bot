@@ -19,31 +19,36 @@ startServer();
  * */
 /** @type ListenerHandler */
 const listenerHandler = (listener, event) => {
+  console.log('listenerHandler event', event);
   return async (data) => {
     try {
       return await listener(data);
     } catch (e) {
+      console.log('listenerHandler error code', e.code);
+      console.error(e);
       await weatherBot.sendMessage(data.chat.id || data.message.chat.id, `Bot error on ${event} handler`);
     }
   };
 };
 const relayListenerHandler = (listener, event) => {
+  console.log('relayListenerHandler event', event);
   return async (data) => {
     // console.log('relayListenerHandler data', data);
     const bot2Username = 'Amazon_Relay_Test_Bot';
     try {
+      console.log('relayListenerHandler event', event);
       return await listener(data);
     } catch (e) {
       // console.log('error code', e.code);
       // console.log('error message', e.message);
-      console.log('error json', e.toJSON());
+      console.log('relayListenerHandler error json', e.toJSON());
       if (e.message === 'ETELEGRAM: 400 Bad Request: chat not found'
         || e.message === 'ETELEGRAM: 403 Forbidden: bot was kicked from the group chat'
         || e.message === 'ETELEGRAM: 403 Forbidden: bot is not a member of the supergroup chat'
         || e.message === 'ETELEGRAM: 403 Forbidden: bot was blocked by the user'
         || e.message === 'ETELEGRAM: 403 Forbidden: bot is not a member of the channel chat'
         || e.message === 'ETELEGRAM: 403 Forbidden: bot was kicked from the supergroup chat'
-    ) {
+      ) {
         const weatherBotName = (await weatherBot.getMe()).username;
         console.log(`Bot ${weatherBotName} is not a member of the group chat`);
         // You can use the `switch_inline_query` field of the InlineKeyboardButton
@@ -74,6 +79,15 @@ const onRelayCallbackQuery = relayListenerHandler(callbackQuery, onEnum.callback
 
 weatherBot.on(onEnum.callback_query, onCallbackQuery);
 relayBot.on(onEnum.callback_query, onRelayCallbackQuery);
+
+// weatherBot.getUpdates({timeout: 100, offset: 10})
+//     .then(updates => {
+//         console.log('weatherBot updates', updates);
+//     })
+// relayBot.getUpdates({timeout: 100, offset: 10})
+//     .then(updates => {
+//         console.log('relayBot updates', updates);
+//     })
 
 // Listen for any messages and log them
 weatherBot.on('message', async (msg) => {
@@ -114,6 +128,7 @@ weatherBot.on('message', async (msg) => {
 
 // Log any errors
 weatherBot.on('polling_error', (error) => {
+  console.log('polling_error', error.code);  // => 'EFATAL'
   console.log(error.message);
 });
 
@@ -139,9 +154,9 @@ process.on('SIGINT', StopBot);
 process.on('SIGTERM', StopBot);
 process.on('uncaughtException', (err) => {
   console.error('Unhandled exception: ', err);
-  StopBot();
+  // StopBot();
 });
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  StopBot();
+  console.error('Unhandled Rejection at ',/* promise, */'reason:', reason);
+  // StopBot();
 });
