@@ -121,7 +121,7 @@ const onLocation = listenerHandler(onLocationCallback, onEnum.location);
 
 weatherBot.on(onEnum.location, onLocation);
 
-process.on('SIGINT', async () => {
+const StopBot = async () => {
   console.log('Shutting down bot...');
   try {
     await relayBot.stopPolling();
@@ -132,4 +132,15 @@ process.on('SIGINT', async () => {
     console.error(e);
     process.exit(1);
   }
+};
+
+process.on('SIGINT', StopBot);
+process.on('SIGTERM', StopBot);
+process.on('uncaughtException', (err) => {
+  console.error('Unhandled exception: ', err);
+  StopBot();
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  StopBot();
 });
