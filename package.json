@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node ./server/index.js",
-    "deploy-server": "bash deploy.sh"
+    "deploy-server": "bash deploy.sh",
+    "postinstall": "cd server && npm install"
   },
   "dependencies": {
     "dotenv": "16.0.3",
