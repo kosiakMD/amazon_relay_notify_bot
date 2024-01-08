@@ -121,3 +121,15 @@ const onLocation = listenerHandler(onLocationCallback, onEnum.location);
 
 weatherBot.on(onEnum.location, onLocation);
 
+process.on('SIGINT', async () => {
+  console.log('Shutting down bot...');
+  try {
+    await relayBot.stopPolling();
+    console.log('Bot has stopped polling');
+    process.exit(0);
+  } catch (e) {
+    console.log('Error while shutting down bot');
+    console.error(e);
+    process.exit(1);
+  }
+});
