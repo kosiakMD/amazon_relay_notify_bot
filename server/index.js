@@ -125,6 +125,7 @@ const StopBot = async () => {
   console.log('Shutting down bot...');
   try {
     await relayBot.stopPolling();
+    await weatherBot.stopPolling();
     console.log('Bot has stopped polling');
     process.exit(0);
   } catch (e) {
